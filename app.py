@@ -22,6 +22,13 @@ DOMAIN = os.getenv("DOMAIN", "techcs4899.mycafe24.com")
 APP_PREFIX = os.getenv("APP_PREFIX", "app-")
 NETWORK_NAME = os.getenv("NETWORK_NAME", "hermes-net")
 
+# URL path overrides (app_name → actual nginx path)
+URL_OVERRIDES = {
+    "search-portal": "/search/",
+    "dashboard": "/dashboard/",
+    "test-harbor-pipeline": "/test-harbor-pipeline/",
+}
+
 # Docker client
 docker_client = docker.DockerClient(base_url="unix:///var/run/docker.sock")
 
@@ -83,6 +90,13 @@ def get_running_apps():
             continue
 
         app_name = name[len(APP_PREFIX):]
+        harbor_name = app_name  # default: same as app_name
+        
+        # Check image tag for actual harbor repo name
+        image_str = c.image.tags[0] if c.image.tags else ""
+        if "/apps/" in image_str:
+            # e.g. "techcs4899.../apps/app-dashboard:latest" → "app-dashboard"
+            harbor_name = image_str.split("/apps/")[-1].split(":")[0]
         
         # Container info
         status = c.status
@@ -109,11 +123,12 @@ def get_running_apps():
         # Port info
         ports = c.attrs.get("NetworkSettings", {}).get("Ports", {})
         
-        # URL path (convention: app name)
-        url_path = f"/{app_name}/"
+        # URL path
+        url_path = URL_OVERRIDES.get(app_name, f"/{app_name}/")
 
         apps.append({
             "name": app_name,
+            "harbor_name": harbor_name,
             "container": name,
             "status": status,
             "image": image,
@@ -157,13 +172,17 @@ def dashboard_api():
 
     # Merge harbor info into apps
     for a in apps:
-        if a["name"] in images:
-            a["harbor"] = images[a["name"]]
+        hname = a.get("harbor_name", a["name"])
+        if hname in images:
+            a["harbor"] = images[hname]
         else:
             a["harbor"] = None
 
     # Find images in Harbor but not deployed
-    deployed_names = {a["name"] for a in apps}
+    deployed_names = set()
+    for a in apps:
+        deployed_names.add(a["name"])
+        deployed_names.add(a.get("harbor_name", a["name"]))
     undeployed = []
     for name, info in images.items():
         if name not in deployed_names:

@@ -308,7 +308,8 @@
 
     async function loadDashboard() {
         try {
-            const resp = await fetch('/api/dashboard');
+            const base = window.location.pathname.replace(/\/$/, '');
+            const resp = await fetch(base + '/api/dashboard');
             const data = await resp.json();
             renderDashboard(data);
         } catch (e) {
@@ -422,8 +423,15 @@
     }
 
     // Init
-    loadDashboard();
-    setupAutoRefresh();
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+        setupAutoRefresh();
+    });
+    // Fallback if DOM already loaded
+    if (document.readyState !== 'loading') {
+        loadDashboard();
+        setupAutoRefresh();
+    }
     </script>
 </body>
 </html>
