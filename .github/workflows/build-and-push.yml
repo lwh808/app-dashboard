@@ -1,0 +1,26 @@
+name: Build and Push to Harbor
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Harbor
+        run: |
+          echo '${{ secrets.HARBOR_PASSWORD }}' | docker login techcs4899.mycafe24.com:8443 -u 'robot$hermes' --password-stdin
+
+      - name: Build and Push
+        run: |
+          IMAGE=techcs4899.mycafe24.com:8443/apps/app-dashboard
+          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+
+      - name: Cleanup
+        run: docker image prune -f
