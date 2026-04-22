@@ -3,304 +3,470 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230ea5e9'/><path d='M30 55L45 70L70 35' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f172a;
-            --bg-card: #1e293b;
-            --bg-card-hover: #263348;
-            --border: #334155;
-            --text: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --accent-dim: #0ea5e9;
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --bg-elevated: #1c1c1f;
+            --border: #2e2e33;
+            --border-hover: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            --accent: #0ea5e9;
+            --accent-muted: rgba(14, 165, 233, 0.12);
             --green: #22c55e;
-            --green-dim: rgba(34, 197, 94, 0.15);
+            --green-muted: rgba(34, 197, 94, 0.12);
+            --green-subtle: rgba(34, 197, 94, 0.06);
             --red: #ef4444;
-            --red-dim: rgba(239, 68, 68, 0.15);
-            --yellow: #eab308;
-            --yellow-dim: rgba(234, 179, 8, 0.15);
-            --purple: #a78bfa;
+            --red-muted: rgba(239, 68, 68, 0.12);
+            --amber: #f59e0b;
+            --amber-muted: rgba(245, 158, 11, 0.12);
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 1px 2px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', -apple-system, system-ui, sans-serif;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 14px; }
         body {
-            font-family: 'Inter', -apple-system, system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: var(--sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        /* ── Top Nav ── */
+        .topnav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
-            padding: 24px 32px;
+            padding: 0 2rem;
         }
-        .header-content {
-            max-width: 1200px;
+        .topnav-inner {
+            max-width: 1280px;
             margin: 0 auto;
+            height: 56px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
+        .brand {
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: -0.3px;
         }
-        .header h1 span { font-size: 28px; }
-        .header-meta {
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            border-radius: 7px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            font-size: 13px;
-            color: var(--text-muted);
+            justify-content: center;
         }
-        .refresh-btn {
-            background: var(--bg-card);
+        .brand-mark svg { width: 16px; height: 16px; }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-time {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-tertiary);
+            padding: 4px 10px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            color: var(--text);
-            padding: 6px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
         }
-        .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .auto-refresh {
+        .nav-btn {
+            height: 32px;
+            padding: 0 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-family: var(--sans);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 12px;
         }
-        .auto-refresh input { accent-color: var(--accent); }
+        .nav-btn:hover { border-color: var(--border-hover); color: var(--text-primary); }
+        .nav-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); }
+        .nav-toggle input { accent-color: var(--accent); width: 14px; height: 14px; }
 
-        /* Stats bar */
-        .stats-bar {
-            max-width: 1200px;
-            margin: 24px auto 0;
-            padding: 0 32px;
+        /* ── Metric Strip ── */
+        .metric-strip {
+            max-width: 1280px;
+            margin: 1.5rem auto 0;
+            padding: 0 2rem;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-        .stat-card {
-            background: var(--bg-card);
+            gap: 1px;
+            background: var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 20px;
         }
-        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; }
-        .stat-value.accent { color: var(--accent); }
-        .stat-value.green { color: var(--green); }
+        .metric {
+            background: var(--bg-secondary);
+            padding: 1.25rem 1.5rem;
+        }
+        .metric-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+        }
+        .metric-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .metric-unit {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        .metric-value.healthy { color: var(--green); }
+        .metric-value.info { color: var(--accent); }
 
-        /* Main content */
-        .main { max-width: 1200px; margin: 24px auto; padding: 0 32px; }
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
+        /* ── Container ── */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+
+        /* ── Section ── */
+        .section { margin-bottom: 2rem; }
+        .section-header {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .section-count {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
         }
 
-        /* App grid */
-        .app-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .app-card {
-            background: var(--bg-card);
+        /* ── App Table ── */
+        .app-table {
+            width: 100%;
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.2s;
-            position: relative;
+            border-radius: var(--radius);
             overflow: hidden;
         }
-        .app-card:hover {
-            border-color: var(--accent);
-            background: var(--bg-card-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        .app-row {
+            display: grid;
+            grid-template-columns: 2fr 100px 1.2fr 100px 120px 140px;
+            align-items: center;
+            padding: 0 1.25rem;
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            transition: background 0.15s;
         }
-        .app-card-header {
+        .app-row:last-child { border-bottom: none; }
+        .app-row:hover { background: var(--bg-elevated); }
+        .app-row-head {
+            height: 40px;
+            background: var(--bg-tertiary);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .app-name-cell {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
+            flex-direction: column;
+            gap: 2px;
         }
         .app-name {
-            font-size: 18px;
             font-weight: 600;
-            color: var(--text);
+            font-size: 14px;
+            color: var(--text-primary);
         }
-        .status-badge {
+        .app-path {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             padding: 3px 10px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            width: fit-content;
         }
-        .status-running { background: var(--green-dim); color: var(--green); }
-        .status-stopped { background: var(--red-dim); color: var(--red); }
-        .status-undeployed { background: var(--yellow-dim); color: var(--yellow); }
+        .status-pill .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-running {
+            background: var(--green-muted);
+            color: var(--green);
+        }
+        .status-running .dot {
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+        }
+        .status-stopped {
+            background: var(--red-muted);
+            color: var(--red);
+        }
+        .status-stopped .dot { background: var(--red); }
+        .status-idle {
+            background: var(--amber-muted);
+            color: var(--amber);
+        }
+        .status-idle .dot { background: var(--amber); }
 
-        .app-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            font-size: 13px;
-            color: var(--text-muted);
+        .app-image {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .meta-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .meta-icon { width: 16px; text-align: center; flex-shrink: 0; }
-        .meta-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .app-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border);
-        }
-        .action-btn {
-            padding: 6px 14px;
-            border-radius: 8px;
+        .app-size {
+            font-family: var(--mono);
             font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-muted);
-            transition: all 0.2s;
-            text-decoration: none;
+            color: var(--text-secondary);
+        }
+        .app-uptime {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .app-actions-cell {
             display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+        .link-btn {
+            height: 28px;
+            padding: 0 10px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+            font-family: var(--sans);
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
-            gap: 4px;
+            transition: all 0.15s;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            background: transparent;
         }
-        .action-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .action-btn.primary {
-            background: var(--accent-dim);
-            color: white;
-            border-color: var(--accent-dim);
+        .link-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-muted);
         }
-        .action-btn.primary:hover { background: var(--accent); }
+        .link-btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .link-btn.primary:hover {
+            background: #0284c7;
+        }
 
-        /* Infra section */
+        /* ── Infra Grid ── */
         .infra-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 32px;
+            gap: 6px;
         }
         .infra-chip {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            background: var(--bg-card);
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            font-family: var(--mono);
+            font-size: 11px;
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
+            color: var(--text-secondary);
             display: flex;
             align-items: center;
             gap: 6px;
+            transition: border-color 0.15s;
         }
-        .dot {
-            width: 8px;
-            height: 8px;
+        .infra-chip:hover { border-color: var(--border-hover); }
+        .infra-chip .dot {
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
         }
-        .dot-green { background: var(--green); }
-        .dot-red { background: var(--red); }
+        .dot-on { background: var(--green); box-shadow: 0 0 4px rgba(34,197,94,0.4); }
+        .dot-off { background: var(--red); }
 
-        /* Loading */
+        /* ── Undeployed ── */
+        .undeployed-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+        .undeployed-card {
+            background: var(--bg-secondary);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+        }
+        .undeployed-name {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+        .undeployed-meta {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            line-height: 1.6;
+        }
+
+        /* ── Loading ── */
         .loading {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 200px;
-            color: var(--text-muted);
+            height: 240px;
+            color: var(--text-tertiary);
+            font-size: 13px;
         }
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid var(--border);
+        .loader {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
             border-top-color: var(--accent);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 12px;
+            animation: spin 0.7s linear infinite;
+            margin-right: 10px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Footer */
+        /* ── Footer ── */
         .footer {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px 32px;
-            font-size: 12px;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border);
+            padding: 1rem 2rem 2rem;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            border-top: 1px solid var(--border);
         }
-
-        /* Harbor link */
-        .harbor-link {
-            color: var(--purple);
+        .footer a {
+            color: var(--text-tertiary);
             text-decoration: none;
+            transition: color 0.15s;
         }
-        .harbor-link:hover { text-decoration: underline; }
+        .footer a:hover { color: var(--accent); }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .stats-bar { grid-template-columns: repeat(2, 1fr); }
-            .app-grid { grid-template-columns: 1fr; }
-            .header-content { flex-direction: column; gap: 12px; }
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .metric-strip { grid-template-columns: repeat(2, 1fr); }
+            .app-row { grid-template-columns: 1.5fr 80px 1fr 120px; height: auto; padding: 12px 16px; }
+            .app-row-head .hide-mobile, .app-row .hide-mobile { display: none; }
+        }
+        @media (max-width: 600px) {
+            .metric-strip { grid-template-columns: 1fr 1fr; }
+            .app-row { grid-template-columns: 1fr 80px; }
+            .topnav { padding: 0 1rem; }
+            .container, .footer { padding-left: 1rem; padding-right: 1rem; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
-            <h1><span>🚀</span> App Dashboard</h1>
-            <div class="header-meta">
-                <span id="timestamp"></span>
-                <div class="auto-refresh">
-                    <input type="checkbox" id="autoRefresh" checked>
-                    <label for="autoRefresh">30s 자동새로고침</label>
+    <nav class="topnav">
+        <div class="topnav-inner">
+            <div class="brand">
+                <div class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
                 </div>
-                <button class="refresh-btn" onclick="loadDashboard()">↻ 새로고침</button>
+                Dashboard
+            </div>
+            <div class="nav-actions">
+                <span class="nav-time" id="timestamp">--</span>
+                <label class="nav-toggle">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    Auto 30s
+                </label>
+                <button class="nav-btn" onclick="loadDashboard()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-2.636-6.364"/><polyline points="21 3 21 9 15 9"/></svg>
+                    Refresh
+                </button>
             </div>
         </div>
+    </nav>
+
+    <div class="metric-strip" id="metricStrip">
+        <div class="metric"><div class="metric-label">Deployed</div><div class="metric-row"><span class="metric-value info" id="mApps">-</span></div></div>
+        <div class="metric"><div class="metric-label">Running</div><div class="metric-row"><span class="metric-value healthy" id="mRunning">-</span><span class="metric-unit">healthy</span></div></div>
+        <div class="metric"><div class="metric-label">Containers</div><div class="metric-row"><span class="metric-value" id="mTotal">-</span><span class="metric-unit">total</span></div></div>
+        <div class="metric"><div class="metric-label">Harbor Images</div><div class="metric-row"><span class="metric-value info" id="mImages">-</span><span class="metric-unit">repos</span></div></div>
     </div>
 
-    <div class="stats-bar" id="statsBar">
-        <div class="stat-card"><div class="stat-label">배포된 앱</div><div class="stat-value accent" id="statApps">-</div></div>
-        <div class="stat-card"><div class="stat-label">실행 중</div><div class="stat-value green" id="statRunning">-</div></div>
-        <div class="stat-card"><div class="stat-label">전체 컨테이너</div><div class="stat-value" id="statTotal">-</div></div>
-        <div class="stat-card"><div class="stat-label">Harbor 이미지</div><div class="stat-value accent" id="statImages">-</div></div>
-    </div>
-
-    <div class="main">
-        <div id="content">
-            <div class="loading"><div class="spinner"></div>대시보드 로딩 중...</div>
-        </div>
+    <div class="container" id="content">
+        <div class="loading"><div class="loader"></div>Loading dashboard...</div>
     </div>
 
     <div class="footer">
-        <span>Powered by Hermes 🤖</span>
-        <a href="" class="harbor-link" id="harborLink" target="_blank">Harbor Registry ↗</a>
+        <span>Hermes Platform</span>
+        <a href="" id="harborLink" target="_blank">Harbor Registry</a>
     </div>
 
     <script>
@@ -311,127 +477,128 @@
             const base = window.location.pathname.replace(/\/$/, '');
             const resp = await fetch(base + '/api/dashboard');
             const data = await resp.json();
-            renderDashboard(data);
+            render(data);
         } catch (e) {
-            document.getElementById('content').innerHTML = `
-                <div class="loading" style="color: var(--red)">⚠️ 대시보드 로딩 실패: ${e.message}</div>`;
+            document.getElementById('content').innerHTML =
+                `<div class="loading" style="color:var(--red)">Failed to load: ${e.message}</div>`;
         }
     }
 
-    function renderDashboard(data) {
-        // Stats
-        document.getElementById('statApps').textContent = data.apps.length;
-        document.getElementById('statRunning').textContent = data.apps.filter(a => a.status === 'running').length;
-        document.getElementById('statTotal').textContent = data.system.total;
-        document.getElementById('statImages').textContent = data.apps.length + data.undeployed.length;
+    function render(data) {
+        document.getElementById('mApps').textContent = data.apps.length;
+        document.getElementById('mRunning').textContent = data.apps.filter(a => a.status === 'running').length;
+        document.getElementById('mTotal').textContent = data.system.total;
+        document.getElementById('mImages').textContent = data.apps.length + data.undeployed.length;
         document.getElementById('timestamp').textContent = data.timestamp;
         document.getElementById('harborLink').href = data.harbor_url;
 
-        let html = '';
+        let h = '';
 
-        // Deployed Apps
-        if (data.apps.length > 0) {
-            html += `<div class="section-title">📦 배포된 앱 (${data.apps.length})</div>`;
-            html += '<div class="app-grid">';
+        // ── Apps Table ──
+        if (data.apps.length) {
+            h += `<div class="section">
+                <div class="section-header">
+                    <span class="section-title">Deployed Applications</span>
+                    <span class="section-count">${data.apps.length}</span>
+                </div>
+                <div class="app-table">
+                    <div class="app-row app-row-head">
+                        <div>Application</div>
+                        <div>Status</div>
+                        <div class="hide-mobile">Image</div>
+                        <div class="hide-mobile">Size</div>
+                        <div>Uptime</div>
+                        <div></div>
+                    </div>`;
+
             for (const app of data.apps) {
-                const statusClass = app.status === 'running' ? 'status-running' : 'status-stopped';
-                const statusText = app.status === 'running' ? 'Running' : 'Stopped';
-                const harbor = app.harbor;
-                
-                html += `
-                <div class="app-card">
-                    <div class="app-card-header">
-                        <div class="app-name">${app.name}</div>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
+                const sc = app.status === 'running' ? 'status-running' : 'status-stopped';
+                const st = app.status === 'running' ? 'Running' : 'Stopped';
+                const hb = app.harbor;
+                const sizeText = hb ? `${hb.size_mb} MB` : '-';
+                const imgShort = app.image.split('/').pop();
+
+                h += `
+                <div class="app-row">
+                    <div class="app-name-cell">
+                        <span class="app-name">${app.name}</span>
+                        <span class="app-path">${app.url_path}</span>
                     </div>
-                    <div class="app-meta">
-                        <div class="meta-row"><span class="meta-icon">🔗</span><a href="${app.url}" target="_blank" style="color:var(--accent);text-decoration:none">${app.url_path}</a></div>
-                        <div class="meta-row"><span class="meta-icon">⏱️</span><span class="meta-value">Uptime: ${app.uptime || 'N/A'}</span></div>
-                        <div class="meta-row"><span class="meta-icon">🐳</span><span class="meta-value" title="${app.image}">${truncate(app.image, 45)}</span></div>
-                        ${harbor ? `
-                        <div class="meta-row"><span class="meta-icon">📦</span><span class="meta-value">${harbor.size_mb}MB · ${harbor.tag_count} tags</span></div>
-                        <div class="meta-row"><span class="meta-icon">📅</span><span class="meta-value">Push: ${formatTime(harbor.push_time)}</span></div>
-                        ` : ''}
-                    </div>
-                    <div class="app-actions">
-                        <a href="${app.url}" target="_blank" class="action-btn primary">🌐 접속</a>
-                        <a href="${data.harbor_url}/harbor/projects/1/repositories/${app.name}" target="_blank" class="action-btn">📦 Harbor</a>
-                        <a href="https://github.com/lwh808/${app.name}" target="_blank" class="action-btn">🐙 GitHub</a>
+                    <div><span class="status-pill ${sc}"><span class="dot"></span>${st}</span></div>
+                    <div class="app-image hide-mobile" title="${app.image}">${imgShort}</div>
+                    <div class="app-size hide-mobile">${sizeText}</div>
+                    <div class="app-uptime">${app.uptime || '-'}</div>
+                    <div class="app-actions-cell">
+                        <a href="${app.url}" target="_blank" class="link-btn primary">Open</a>
+                        <a href="${data.harbor_url}/harbor/projects/1/repositories/${app.harbor_name || app.name}" target="_blank" class="link-btn">Harbor</a>
+                        <a href="https://github.com/lwh808/${app.name}" target="_blank" class="link-btn">Git</a>
                     </div>
                 </div>`;
             }
-            html += '</div>';
+            h += '</div></div>';
         }
 
-        // Undeployed images
-        if (data.undeployed.length > 0) {
-            html += `<div class="section-title">💤 미배포 이미지 (${data.undeployed.length})</div>`;
-            html += '<div class="app-grid">';
+        // ── Undeployed ──
+        if (data.undeployed.length) {
+            h += `<div class="section">
+                <div class="section-header">
+                    <span class="section-title">Undeployed Images</span>
+                    <span class="section-count">${data.undeployed.length}</span>
+                </div>
+                <div class="undeployed-grid">`;
             for (const img of data.undeployed) {
-                html += `
-                <div class="app-card" style="opacity: 0.7">
-                    <div class="app-card-header">
-                        <div class="app-name">${img.name}</div>
-                        <span class="status-badge status-undeployed">Not Deployed</span>
-                    </div>
-                    <div class="app-meta">
-                        <div class="meta-row"><span class="meta-icon">📦</span><span>${img.size_mb}MB · ${img.tag_count} tags</span></div>
-                        <div class="meta-row"><span class="meta-icon">📅</span><span>Push: ${formatTime(img.push_time)}</span></div>
+                h += `
+                <div class="undeployed-card">
+                    <div class="undeployed-name">${img.name}</div>
+                    <div class="undeployed-meta">
+                        ${img.size_mb} MB &middot; ${img.tag_count} tags<br>
+                        pushed ${fmtTime(img.push_time)}
                     </div>
                 </div>`;
             }
-            html += '</div>';
+            h += '</div></div>';
         }
 
-        // Infra containers
-        if (data.system.infra && data.system.infra.length > 0) {
-            html += `<div class="section-title">⚙️ 인프라 컨테이너 (${data.system.infra_count})</div>`;
-            html += '<div class="infra-grid">';
+        // ── Infra ──
+        if (data.system.infra && data.system.infra.length) {
+            h += `<div class="section">
+                <div class="section-header">
+                    <span class="section-title">Infrastructure</span>
+                    <span class="section-count">${data.system.infra_count}</span>
+                </div>
+                <div class="infra-grid">`;
             for (const c of data.system.infra) {
-                const dotClass = c.status === 'running' ? 'dot-green' : 'dot-red';
-                html += `<div class="infra-chip"><span class="dot ${dotClass}"></span>${c.name}</div>`;
+                const dc = c.status === 'running' ? 'dot-on' : 'dot-off';
+                h += `<div class="infra-chip"><span class="dot ${dc}"></span>${c.name}</div>`;
             }
-            html += '</div>';
+            h += '</div></div>';
         }
 
-        document.getElementById('content').innerHTML = html;
+        document.getElementById('content').innerHTML = h;
     }
 
-    function truncate(str, len) {
-        return str.length > len ? str.substring(0, len) + '...' : str;
-    }
-
-    function formatTime(iso) {
-        if (!iso) return 'N/A';
+    function fmtTime(iso) {
+        if (!iso) return '-';
         try {
-            const d = new Date(iso);
-            return d.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return new Date(iso).toLocaleString('ko-KR', {
+                timeZone: 'Asia/Seoul', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
         } catch { return iso; }
     }
 
-    // Auto refresh
     function setupAutoRefresh() {
         const cb = document.getElementById('autoRefresh');
-        if (refreshTimer) clearInterval(refreshTimer);
-        if (cb.checked) {
-            refreshTimer = setInterval(loadDashboard, 30000);
-        }
-        cb.addEventListener('change', () => {
+        const go = () => {
             if (refreshTimer) clearInterval(refreshTimer);
             if (cb.checked) refreshTimer = setInterval(loadDashboard, 30000);
-        });
+        };
+        cb.addEventListener('change', go);
+        go();
     }
 
-    // Init
-    document.addEventListener('DOMContentLoaded', () => {
-        loadDashboard();
-        setupAutoRefresh();
-    });
-    // Fallback if DOM already loaded
-    if (document.readyState !== 'loading') {
-        loadDashboard();
-        setupAutoRefresh();
-    }
+    document.addEventListener('DOMContentLoaded', () => { loadDashboard(); setupAutoRefresh(); });
+    if (document.readyState !== 'loading') { loadDashboard(); setupAutoRefresh(); }
     </script>
 </body>
 </html>
