@@ -204,4 +204,63 @@ def index():
         return f.read()
 
 
+# ── Container Control API ──
+
+PROTECTED_PREFIXES = ("hermes-", "harbor-", "github-runner", "nginx", "redis", "registry")
+
+
+def _get_container(container_name: str):
+    """Get container by name, with safety check"""
+    # Only allow app- containers to be controlled
+    if not container_name.startswith(APP_PREFIX):
+        return None, {"error": "Only app containers can be controlled", "ok": False}
+    # Block if somehow named after infra
+    bare = container_name[len(APP_PREFIX):]
+    for p in PROTECTED_PREFIXES:
+        if bare.startswith(p):
+            return None, {"error": "Protected container", "ok": False}
+    try:
+        return docker_client.containers.get(container_name), None
+    except docker.errors.NotFound:
+        return None, {"error": f"Container '{container_name}' not found", "ok": False}
+    except Exception as e:
+        return None, {"error": str(e), "ok": False}
+
+
+@app.post("/api/containers/{container_name}/stop")
+def container_stop(container_name: str):
+    c, err = _get_container(container_name)
+    if err:
+        return err
+    try:
+        c.stop(timeout=10)
+        return {"ok": True, "status": "stopped", "container": container_name}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/containers/{container_name}/start")
+def container_start(container_name: str):
+    c, err = _get_container(container_name)
+    if err:
+        return err
+    try:
+        c.start()
+        return {"ok": True, "status": "running", "container": container_name}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/containers/{container_name}/restart")
+def container_restart(container_name: str):
+    c, err = _get_container(container_name)
+    if err:
+        return err
+    try:
+        c.restart(timeout=10)
+        return {"ok": True, "status": "running", "container": container_name}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
