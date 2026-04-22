@@ -419,6 +419,100 @@
         .toast-err { background: var(--red-muted); color: var(--red); border-color: rgba(239,68,68,0.3); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ── Slide Panel ── */
+        .panel-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .panel-overlay.open { opacity: 1; pointer-events: auto; }
+        .panel {
+            position: fixed; top: 0; right: 0; bottom: 0; width: min(680px, 90vw); z-index: 201;
+            background: var(--bg-primary); border-left: 1px solid var(--border);
+            transform: translateX(100%); transition: transform 0.25s ease;
+            display: flex; flex-direction: column;
+        }
+        .panel.open { transform: translateX(0); }
+        .panel-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .panel-title { font-weight: 600; font-size: 15px; }
+        .panel-close {
+            width: 32px; height: 32px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-secondary); cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .panel-close:hover { border-color: var(--red); color: var(--red); }
+        .panel-tabs {
+            display: flex; border-bottom: 1px solid var(--border);
+            flex-shrink: 0; padding: 0 20px;
+        }
+        .panel-tab {
+            padding: 10px 16px; font-size: 12px; font-weight: 500;
+            color: var(--text-tertiary); cursor: pointer; border: none; background: none;
+            border-bottom: 2px solid transparent; transition: all 0.15s;
+            font-family: var(--sans);
+        }
+        .panel-tab:hover { color: var(--text-secondary); }
+        .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .panel-body {
+            flex: 1; overflow-y: auto; padding: 20px;
+        }
+        .panel-body pre {
+            font-family: var(--mono); font-size: 11px; line-height: 1.6;
+            color: var(--text-secondary); white-space: pre-wrap; word-break: break-all;
+            margin: 0;
+        }
+        /* Log controls */
+        .log-controls {
+            display: flex; gap: 8px; margin-bottom: 12px; align-items: center;
+        }
+        .log-controls select, .log-controls button {
+            height: 30px; padding: 0 10px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--bg-secondary);
+            color: var(--text-secondary); font-size: 11px; font-family: var(--sans);
+            cursor: pointer;
+        }
+        .log-controls button:hover { border-color: var(--accent); color: var(--accent); }
+        /* Inspect sections */
+        .insp-section { margin-bottom: 16px; }
+        .insp-label {
+            font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+        }
+        .insp-table {
+            width: 100%; font-size: 12px; border-collapse: collapse;
+        }
+        .insp-table td {
+            padding: 4px 8px; border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .insp-table td:first-child {
+            font-family: var(--mono); color: var(--text-tertiary);
+            width: 120px; font-size: 11px;
+        }
+        .insp-table td:last-child { font-family: var(--mono); color: var(--text-secondary); word-break: break-all; }
+        /* Exec */
+        .exec-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 6px; margin-bottom: 16px;
+        }
+        .exec-btn {
+            padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+            background: var(--bg-secondary); color: var(--text-secondary);
+            font-family: var(--mono); font-size: 11px; cursor: pointer;
+            transition: all 0.15s; text-align: center;
+        }
+        .exec-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); }
+        .exec-btn.active { border-color: var(--accent); color: var(--accent); }
+        .exec-output {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px; min-height: 200px;
+        }
+
         /* ── Undeployed ── */
         .undeployed-grid {
             display: grid;
@@ -541,6 +635,21 @@
         <a href="" id="harborLink" target="_blank">Harbor Registry</a>
     </div>
 
+    <!-- Detail Panel -->
+    <div class="panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+    <div class="panel" id="panel">
+        <div class="panel-head">
+            <span class="panel-title" id="panelTitle">container</span>
+            <button class="panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="panel-tabs" id="panelTabs">
+            <button class="panel-tab active" data-tab="logs" onclick="switchTab('logs')">Logs</button>
+            <button class="panel-tab" data-tab="inspect" onclick="switchTab('inspect')">Inspect</button>
+            <button class="panel-tab" data-tab="exec" onclick="switchTab('exec')">Exec</button>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+    </div>
+
     <script>
     let refreshTimer = null;
 
@@ -616,9 +725,9 @@
                         </button>
                     </div>
                     <div class="app-actions-cell">
+                        <button class="link-btn" onclick="openPanel('${app.container}')">Detail</button>
                         <a href="${app.url}" target="_blank" class="link-btn primary">Open</a>
                         <a href="${data.harbor_url}/harbor/projects/1/repositories/${app.harbor_name || app.name}" target="_blank" class="link-btn">Harbor</a>
-                        <a href="https://github.com/lwh808/${app.name}" target="_blank" class="link-btn">Git</a>
                     </div>
                 </div>`;
             }
@@ -715,6 +824,170 @@
         el.textContent = msg;
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 3000);
+    }
+
+    // ── Detail Panel ──
+    let currentContainer = '';
+    let currentTab = 'logs';
+    const BASE = () => window.location.pathname.replace(/\/$/, '');
+
+    function openPanel(container) {
+        currentContainer = container;
+        document.getElementById('panelTitle').textContent = container;
+        document.getElementById('panelOverlay').classList.add('open');
+        document.getElementById('panel').classList.add('open');
+        switchTab('logs');
+    }
+
+    function closePanel() {
+        document.getElementById('panelOverlay').classList.remove('open');
+        document.getElementById('panel').classList.remove('open');
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.panel-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tab);
+        });
+        const body = document.getElementById('panelBody');
+        body.innerHTML = '<div class="loading"><div class="loader"></div>Loading...</div>';
+
+        if (tab === 'logs') loadLogs();
+        else if (tab === 'inspect') loadInspect();
+        else if (tab === 'exec') loadExec();
+    }
+
+    async function loadLogs(tail = 200) {
+        const body = document.getElementById('panelBody');
+        try {
+            const resp = await fetch(`${BASE()}/api/containers/${currentContainer}/logs?tail=${tail}`);
+            const text = await resp.text();
+            body.innerHTML = `
+                <div class="log-controls">
+                    <select onchange="loadLogs(this.value)">
+                        <option value="100" ${tail==100?'selected':''}>100 lines</option>
+                        <option value="200" ${tail==200?'selected':''}>200 lines</option>
+                        <option value="500" ${tail==500?'selected':''}>500 lines</option>
+                        <option value="1000" ${tail==1000?'selected':''}>1000 lines</option>
+                        <option value="3000" ${tail==3000?'selected':''}>3000 lines</option>
+                    </select>
+                    <button onclick="loadLogs(${tail})">Refresh</button>
+                </div>
+                <pre>${escHtml(text)}</pre>`;
+            body.scrollTop = body.scrollHeight;
+        } catch (e) {
+            body.innerHTML = `<pre style="color:var(--red)">Error: ${e.message}</pre>`;
+        }
+    }
+
+    async function loadInspect() {
+        const body = document.getElementById('panelBody');
+        try {
+            const resp = await fetch(`${BASE()}/api/containers/${currentContainer}/inspect`);
+            const d = await resp.json();
+            if (!d.ok) { body.innerHTML = `<pre style="color:var(--red)">${d.error}</pre>`; return; }
+
+            let h = '';
+            // State
+            h += sec('State', tbl({
+                'Status': pill(d.state.status),
+                'PID': d.state.pid,
+                'Started': fmtISO(d.state.started_at),
+                'Exit Code': d.state.exit_code,
+            }));
+            // Container
+            h += sec('Container', tbl({
+                'ID': d.id,
+                'Image': d.image,
+                'Created': fmtISO(d.created),
+                'Working Dir': d.working_dir || '-',
+                'Entrypoint': d.entrypoint ? d.entrypoint.join(' ') : '-',
+                'Cmd': d.cmd ? d.cmd.join(' ') : '-',
+            }));
+            // Networks
+            for (const [name, net] of Object.entries(d.networks || {})) {
+                h += sec(`Network: ${name}`, tbl({
+                    'IP': net.ip, 'Gateway': net.gateway, 'MAC': net.mac
+                }));
+            }
+            // Ports
+            if (Object.keys(d.ports || {}).length) {
+                const portRows = {};
+                for (const [p, binds] of Object.entries(d.ports)) {
+                    portRows[p] = binds ? binds.map(b => `${b.host_ip || '0.0.0.0'}:${b.host_port}`).join(', ') : 'not bound';
+                }
+                h += sec('Ports', tbl(portRows));
+            }
+            // Mounts
+            if (d.mounts && d.mounts.length) {
+                const mountRows = {};
+                d.mounts.forEach((m, i) => {
+                    mountRows[m.dest] = `${m.source} (${m.type}, ${m.rw ? 'rw' : 'ro'})`;
+                });
+                h += sec('Mounts', tbl(mountRows));
+            }
+            // Env
+            if (d.env && d.env.length) {
+                h += sec('Environment', '<pre>' + d.env.map(escHtml).join('\n') + '</pre>');
+            }
+            // Resources
+            h += sec('Resources', tbl({
+                'Memory Limit': d.memory_limit ? `${(d.memory_limit/1024/1024).toFixed(0)} MB` : 'unlimited',
+                'CPU Shares': d.cpu_shares || 'default',
+                'Restart Policy': d.restart_policy?.Name || 'none',
+            }));
+
+            body.innerHTML = h;
+        } catch (e) {
+            body.innerHTML = `<pre style="color:var(--red)">Error: ${e.message}</pre>`;
+        }
+    }
+
+    async function loadExec() {
+        const cmds = ['ps','df','top','env','uname','uptime','ss','ls','whoami','cat-hosts','cat-resolv','ip','free'];
+        const body = document.getElementById('panelBody');
+        body.innerHTML = `
+            <div class="exec-grid" id="execGrid">
+                ${cmds.map(c => `<button class="exec-btn" onclick="runExec('${c}',this)">${c}</button>`).join('')}
+            </div>
+            <div class="exec-output" id="execOutput"><pre style="color:var(--text-tertiary)">Select a command above</pre></div>`;
+    }
+
+    async function runExec(cmd, btn) {
+        document.querySelectorAll('.exec-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const out = document.getElementById('execOutput');
+        out.innerHTML = '<div class="loading"><div class="loader"></div>Running...</div>';
+        try {
+            const resp = await fetch(`${BASE()}/api/containers/${currentContainer}/exec?cmd=${cmd}`, { method: 'POST' });
+            const d = await resp.json();
+            if (!d.ok) { out.innerHTML = `<pre style="color:var(--red)">${escHtml(d.error)}</pre>`; return; }
+            let result = '';
+            if (d.stdout) result += d.stdout;
+            if (d.stderr) result += '\n--- stderr ---\n' + d.stderr;
+            out.innerHTML = `<div style="font-family:var(--mono);font-size:10px;color:var(--text-tertiary);margin-bottom:6px">$ ${escHtml(d.cmd)} [exit: ${d.exit_code}]</div><pre>${escHtml(result)}</pre>`;
+        } catch (e) {
+            out.innerHTML = `<pre style="color:var(--red)">Error: ${e.message}</pre>`;
+        }
+    }
+
+    // Helpers
+    function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function sec(label, content) { return `<div class="insp-section"><div class="insp-label">${label}</div>${content}</div>`; }
+    function tbl(obj) {
+        let h = '<table class="insp-table">';
+        for (const [k,v] of Object.entries(obj)) h += `<tr><td>${k}</td><td>${v}</td></tr>`;
+        return h + '</table>';
+    }
+    function pill(status) {
+        const cls = status === 'running' ? 'status-running' : 'status-stopped';
+        return `<span class="status-pill ${cls}" style="display:inline-flex"><span class="dot"></span>${status}</span>`;
+    }
+    function fmtISO(iso) {
+        if (!iso || iso.startsWith('0001')) return '-';
+        try { return new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }); } catch { return iso; }
     }
 
     document.addEventListener('DOMContentLoaded', () => { loadDashboard(); setupAutoRefresh(); });

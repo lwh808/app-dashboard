@@ -8,8 +8,8 @@ from datetime import datetime, timezone, timedelta
 from urllib.request import Request, urlopen
 from urllib.error import URLError
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 import docker
 
@@ -259,6 +259,139 @@ def container_restart(container_name: str):
     try:
         c.restart(timeout=10)
         return {"ok": True, "status": "running", "container": container_name}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ── Logs API ──
+
+@app.get("/api/containers/{container_name}/logs")
+def container_logs(
+    container_name: str,
+    tail: int = Query(200, ge=10, le=5000),
+    since: int = Query(0, ge=0),
+):
+    c, err = _get_container(container_name)
+    if err:
+        return err
+    try:
+        kwargs = {"tail": tail, "timestamps": True}
+        if since > 0:
+            kwargs["since"] = since
+        logs = c.logs(**kwargs).decode("utf-8", errors="replace")
+        return PlainTextResponse(logs)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ── Inspect API ──
+
+@app.get("/api/containers/{container_name}/inspect")
+def container_inspect(container_name: str):
+    c, err = _get_container(container_name)
+    if err:
+        return err
+    try:
+        attrs = c.attrs
+        net = attrs.get("NetworkSettings", {})
+        state = attrs.get("State", {})
+        config = attrs.get("Config", {})
+        host_config = attrs.get("HostConfig", {})
+
+        # Extract meaningful info
+        networks = {}
+        for name, detail in net.get("Networks", {}).items():
+            networks[name] = {
+                "ip": detail.get("IPAddress", ""),
+                "gateway": detail.get("Gateway", ""),
+                "mac": detail.get("MacAddress", ""),
+            }
+
+        mounts = []
+        for m in attrs.get("Mounts", []):
+            mounts.append({
+                "type": m.get("Type", ""),
+                "source": m.get("Source", ""),
+                "dest": m.get("Destination", ""),
+                "rw": m.get("RW", True),
+            })
+
+        ports = {}
+        for port, bindings in (net.get("Ports") or {}).items():
+            if bindings:
+                ports[port] = [{"host_ip": b.get("HostIp", ""), "host_port": b.get("HostPort", "")} for b in bindings]
+            else:
+                ports[port] = None
+
+        return {
+            "ok": True,
+            "id": attrs.get("Id", "")[:12],
+            "name": attrs.get("Name", "").lstrip("/"),
+            "image": config.get("Image", ""),
+            "created": attrs.get("Created", ""),
+            "state": {
+                "status": state.get("Status", ""),
+                "running": state.get("Running", False),
+                "started_at": state.get("StartedAt", ""),
+                "finished_at": state.get("FinishedAt", ""),
+                "exit_code": state.get("ExitCode", 0),
+                "pid": state.get("Pid", 0),
+            },
+            "env": [e for e in config.get("Env", []) if not any(s in e.upper() for s in ("SECRET", "PASSWORD", "TOKEN", "KEY", "AUTH"))],
+            "cmd": config.get("Cmd"),
+            "entrypoint": config.get("Entrypoint"),
+            "working_dir": config.get("WorkingDir", ""),
+            "networks": networks,
+            "ports": ports,
+            "mounts": mounts,
+            "restart_policy": host_config.get("RestartPolicy", {}),
+            "memory_limit": host_config.get("Memory", 0),
+            "cpu_shares": host_config.get("CpuShares", 0),
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ── Exec API ──
+
+ALLOWED_COMMANDS = {
+    "ps": ["ps", "aux"],
+    "df": ["df", "-h"],
+    "top": ["top", "-bn1"],
+    "env": ["env"],
+    "uname": ["uname", "-a"],
+    "uptime": ["uptime"],
+    "netstat": ["netstat", "-tlnp"],
+    "ss": ["ss", "-tlnp"],
+    "ls": ["ls", "-la", "/"],
+    "whoami": ["whoami"],
+    "cat-hosts": ["cat", "/etc/hosts"],
+    "cat-resolv": ["cat", "/etc/resolv.conf"],
+    "ip": ["ip", "addr"],
+    "free": ["free", "-h"],
+}
+
+
+@app.post("/api/containers/{container_name}/exec")
+def container_exec(container_name: str, cmd: str = Query(...)):
+    c, err = _get_container(container_name)
+    if err:
+        return err
+
+    if cmd not in ALLOWED_COMMANDS:
+        return {"ok": False, "error": f"Command not allowed. Allowed: {', '.join(sorted(ALLOWED_COMMANDS.keys()))}"}
+
+    try:
+        result = c.exec_run(ALLOWED_COMMANDS[cmd], demux=True)
+        stdout = (result.output[0] or b"").decode("utf-8", errors="replace")
+        stderr = (result.output[1] or b"").decode("utf-8", errors="replace")
+        return {
+            "ok": True,
+            "exit_code": result.exit_code,
+            "stdout": stdout[-10000:],  # cap at 10KB
+            "stderr": stderr[-5000:] if stderr else "",
+            "cmd": " ".join(ALLOWED_COMMANDS[cmd]),
+        }
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
