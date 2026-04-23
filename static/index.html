@@ -817,6 +817,9 @@
                 const hb = app.harbor;
                 const sizeText = hb ? `${hb.size_mb} MB` : '-';
                 const imgShort = app.image.split('/').pop();
+                const hlth = app.health || 'running';
+                const hlthClass = hlth === 'unhealthy' ? 'status-stopped' : hlth === 'starting' ? 'status-idle' : 'status-running';
+                const hlthLabel = hlth === 'healthy' ? 'Healthy' : hlth === 'unhealthy' ? 'Unhealthy' : hlth === 'starting' ? 'Starting' : 'Running';
 
                 h += `
                 <div class="app-row">
@@ -824,7 +827,7 @@
                         <span class="app-name">${app.name}</span>
                         <span class="app-path">${app.url_path}</span>
                     </div>
-                    <div><span class="status-pill status-running"><span class="dot"></span>Running</span></div>
+                    <div><span class="status-pill ${hlthClass}"><span class="dot"></span>${hlthLabel}</span></div>
                     <div class="ctrl-group">
                         <button class="ctrl-btn ctrl-stop" onclick="ctrlContainer('${app.container}','stop',this)">
                             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>

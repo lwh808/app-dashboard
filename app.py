@@ -102,15 +102,27 @@ def get_running_apps():
         status = c.status
         image = c.image.tags[0] if c.image.tags else str(c.image.short_id)
         
-        # Uptime
-        created = c.attrs.get("Created", "")
+        # Health check — try HTTP probe to app URL
+        health = None
+        if status == "running":
+            health = "healthy"  # default if running
+            # Check if container has Health in State
+            state = c.attrs.get("State", {})
+            h = state.get("Health", {})
+            if h:
+                health = h.get("Status", "healthy")  # healthy/unhealthy/starting
+        
+        # Uptime — based on StartedAt, not Created
+        state = c.attrs.get("State", {})
+        started_at = state.get("StartedAt", "")
         uptime = ""
-        if created:
+        if started_at and status == "running":
             try:
-                ct = datetime.fromisoformat(created.replace("Z", "+00:00"))
-                delta = datetime.now(timezone.utc) - ct
-                hours = int(delta.total_seconds() // 3600)
-                minutes = int((delta.total_seconds() % 3600) // 60)
+                st = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+                delta = datetime.now(timezone.utc) - st
+                total_sec = max(0, delta.total_seconds())
+                hours = int(total_sec // 3600)
+                minutes = int((total_sec % 3600) // 60)
                 if hours > 24:
                     uptime = f"{hours // 24}일 {hours % 24}시간"
                 elif hours > 0:
@@ -131,6 +143,7 @@ def get_running_apps():
             "harbor_name": harbor_name,
             "container": name,
             "status": status,
+            "health": health,
             "image": image,
             "uptime": uptime,
             "url": f"https://{DOMAIN}{url_path}",
