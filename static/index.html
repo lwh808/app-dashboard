@@ -520,6 +520,99 @@
             border-radius: var(--radius); padding: 12px; min-height: 200px;
         }
 
+        /* ── Stopped Apps ── */
+        .stopped-table {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .stopped-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 100px 160px;
+            align-items: center;
+            padding: 0 1.25rem;
+            height: 52px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            transition: background 0.15s;
+        }
+        .stopped-row:last-child { border-bottom: none; }
+        .stopped-row:hover { background: var(--bg-elevated); }
+        .stopped-row-head {
+            height: 40px;
+            background: var(--bg-tertiary);
+            font-size: 11px; font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .stopped-actions {
+            display: flex; gap: 6px; justify-content: flex-end; align-items: center;
+        }
+        .btn-delete {
+            height: 28px; padding: 0 10px;
+            border-radius: var(--radius-sm);
+            font-size: 11px; font-weight: 500;
+            font-family: var(--sans);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: var(--red); background: transparent;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .btn-delete:hover {
+            background: var(--red-muted); border-color: var(--red);
+        }
+
+        /* ── Delete Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 300; display: flex;
+            align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px; max-width: 420px; width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-title {
+            font-size: 15px; font-weight: 600; margin-bottom: 8px;
+        }
+        .modal-msg {
+            font-size: 13px; color: var(--text-secondary);
+            margin-bottom: 8px; line-height: 1.5;
+        }
+        .modal-warn {
+            font-size: 11px; color: var(--red);
+            background: var(--red-muted);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px; margin-bottom: 16px;
+        }
+        .modal-actions {
+            display: flex; gap: 8px; justify-content: flex-end;
+        }
+        .modal-btn {
+            height: 34px; padding: 0 16px;
+            border-radius: var(--radius-sm);
+            font-size: 12px; font-weight: 500;
+            font-family: var(--sans); cursor: pointer;
+            transition: all 0.15s;
+        }
+        .modal-cancel {
+            border: 1px solid var(--border);
+            background: transparent; color: var(--text-secondary);
+        }
+        .modal-cancel:hover { border-color: var(--border-hover); color: var(--text-primary); }
+        .modal-confirm-delete {
+            border: 1px solid var(--red);
+            background: var(--red); color: #fff;
+        }
+        .modal-confirm-delete:hover { background: #dc2626; }
+
         /* ── Undeployed ── */
         .undeployed-grid {
             display: grid;
@@ -642,6 +735,23 @@
         <a href="" id="harborLink" target="_blank">Harbor Registry</a>
     </div>
 
+    <!-- Delete Confirm Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-title">Delete Container</div>
+            <div class="modal-msg">
+                <strong id="deleteTargetName"></strong> 컨테이너를 삭제합니다.
+            </div>
+            <div class="modal-warn">
+                컨테이너와 nginx 설정이 제거됩니다. 다시 배포하려면 Harbor 이미지에서 재배포해야 합니다.
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button class="modal-btn modal-confirm-delete" id="deleteConfirmBtn" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Detail Panel -->
     <div class="panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
     <div class="panel" id="panel">
@@ -673,8 +783,11 @@
     }
 
     function render(data) {
+        const runningApps = data.apps.filter(a => a.status === 'running');
+        const stoppedApps = data.apps.filter(a => a.status !== 'running');
+
         document.getElementById('mApps').textContent = data.apps.length;
-        document.getElementById('mRunning').textContent = data.apps.filter(a => a.status === 'running').length;
+        document.getElementById('mRunning').textContent = runningApps.length;
         document.getElementById('mTotal').textContent = data.system.total;
         document.getElementById('mImages').textContent = data.apps.length + data.undeployed.length;
         document.getElementById('timestamp').textContent = data.timestamp;
@@ -682,12 +795,12 @@
 
         let h = '';
 
-        // ── Apps Table ──
-        if (data.apps.length) {
+        // ── Running Apps Table ──
+        if (runningApps.length) {
             h += `<div class="section">
                 <div class="section-header">
                     <span class="section-title">Deployed Applications</span>
-                    <span class="section-count">${data.apps.length}</span>
+                    <span class="section-count">${runningApps.length}</span>
                 </div>
                 <div class="app-table">
                     <div class="app-row app-row-head">
@@ -700,9 +813,7 @@
                         <div style="text-align:right">Actions</div>
                     </div>`;
 
-            for (const app of data.apps) {
-                const sc = app.status === 'running' ? 'status-running' : 'status-stopped';
-                const st = app.status === 'running' ? 'Running' : 'Stopped';
+            for (const app of runningApps) {
                 const hb = app.harbor;
                 const sizeText = hb ? `${hb.size_mb} MB` : '-';
                 const imgShort = app.image.split('/').pop();
@@ -713,13 +824,13 @@
                         <span class="app-name">${app.name}</span>
                         <span class="app-path">${app.url_path}</span>
                     </div>
-                    <div><span class="status-pill ${sc}"><span class="dot"></span>${st}</span></div>
+                    <div><span class="status-pill status-running"><span class="dot"></span>Running</span></div>
                     <div class="ctrl-group">
-                        <button class="ctrl-btn ctrl-stop" onclick="ctrlContainer('${app.container}','stop',this)" ${app.status !== 'running' ? 'disabled' : ''}>
+                        <button class="ctrl-btn ctrl-stop" onclick="ctrlContainer('${app.container}','stop',this)">
                             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
                             <span class="ctrl-tooltip">Stop</span>
                         </button>
-                        <button class="ctrl-btn ctrl-start" onclick="ctrlContainer('${app.container}','start',this)" ${app.status === 'running' ? 'disabled' : ''}>
+                        <button class="ctrl-btn ctrl-start" disabled>
                             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="8,5 19,12 8,19"/></svg>
                             <span class="ctrl-tooltip">Start</span>
                         </button>
@@ -735,6 +846,44 @@
                         <button class="link-btn" onclick="openPanel('${app.container}')">Detail</button>
                         <a href="${app.url}" target="_blank" class="link-btn primary">Open</a>
                         <a href="${data.harbor_url}/harbor/projects/1/repositories/${app.harbor_name || app.name}" target="_blank" class="link-btn">Harbor</a>
+                    </div>
+                </div>`;
+            }
+            h += '</div></div>';
+        }
+
+        // ── Stopped Apps ──
+        if (stoppedApps.length) {
+            h += `<div class="section">
+                <div class="section-header">
+                    <span class="section-title">Stopped Applications</span>
+                    <span class="section-count">${stoppedApps.length}</span>
+                </div>
+                <div class="stopped-table">
+                    <div class="stopped-row stopped-row-head">
+                        <div>Application</div>
+                        <div>Image</div>
+                        <div>Status</div>
+                        <div style="text-align:right">Actions</div>
+                    </div>`;
+
+            for (const app of stoppedApps) {
+                const imgShort = app.image.split('/').pop();
+                h += `
+                <div class="stopped-row">
+                    <div class="app-name-cell">
+                        <span class="app-name">${app.name}</span>
+                        <span class="app-path">${app.url_path}</span>
+                    </div>
+                    <div class="app-image" title="${app.image}">${imgShort}</div>
+                    <div><span class="status-pill status-stopped"><span class="dot"></span>Stopped</span></div>
+                    <div class="stopped-actions">
+                        <button class="ctrl-btn ctrl-start" onclick="ctrlContainer('${app.container}','start',this)">
+                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="8,5 19,12 8,19"/></svg>
+                            <span class="ctrl-tooltip">Start</span>
+                        </button>
+                        <button class="link-btn" onclick="openPanel('${app.container}')">Detail</button>
+                        <button class="btn-delete" onclick="openDeleteModal('${app.container}','${app.name}')">Delete</button>
                     </div>
                 </div>`;
             }
@@ -789,6 +938,43 @@
             });
         } catch { return iso; }
     }
+
+    // ── Delete Modal ──
+    let deleteTarget = '';
+
+    function openDeleteModal(container, name) {
+        deleteTarget = container;
+        document.getElementById('deleteTargetName').textContent = name;
+        document.getElementById('deleteModal').classList.add('open');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('open');
+        deleteTarget = '';
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return;
+        const btn = document.getElementById('deleteConfirmBtn');
+        btn.textContent = 'Deleting...';
+        btn.disabled = true;
+        try {
+            const resp = await fetch(`${BASE()}/api/containers/${deleteTarget}`, { method: 'DELETE' });
+            const data = await resp.json();
+            if (data.ok) {
+                toast(`${deleteTarget} deleted`, false);
+                closeDeleteModal();
+                setTimeout(loadDashboard, 300);
+            } else {
+                toast(`Error: ${data.error}`, true);
+            }
+        } catch (e) {
+            toast(`Error: ${e.message}`, true);
+        }
+        btn.textContent = 'Delete';
+        btn.disabled = false;
+    }
+
 
     function setupAutoRefresh() {
         const cb = document.getElementById('autoRefresh');
@@ -851,7 +1037,7 @@
         document.getElementById('panel').classList.remove('open');
     }
 
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePanel(); closeDeleteModal(); } });
 
     function switchTab(tab) {
         currentTab = tab;

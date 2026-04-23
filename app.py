@@ -263,6 +263,35 @@ def container_restart(container_name: str):
         return {"ok": False, "error": str(e)}
 
 
+@app.delete("/api/containers/{container_name}")
+def container_delete(container_name: str):
+    """Delete a stopped container and its nginx config"""
+    c, err = _get_container(container_name)
+    if err:
+        return err
+    try:
+        # Must be stopped first
+        if c.status == "running":
+            return {"ok": False, "error": "Container is still running. Stop it first."}
+        
+        # Remove container
+        c.remove(force=True)
+        
+        # Try to remove nginx config
+        app_name = container_name[len(APP_PREFIX):]
+        nginx_conf = f"/etc/nginx/apps/{app_name}.conf"
+        try:
+            nginx = docker_client.containers.get("hermes-nginx")
+            nginx.exec_run(["rm", "-f", nginx_conf])
+            nginx.exec_run(["nginx", "-s", "reload"])
+        except Exception:
+            pass  # nginx cleanup is best-effort
+        
+        return {"ok": True, "deleted": container_name}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ── Logs API ──
 
 @app.get("/api/containers/{container_name}/logs")
