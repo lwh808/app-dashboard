@@ -196,7 +196,7 @@
         }
         .app-row {
             display: grid;
-            grid-template-columns: minmax(0, 1.8fr) 90px minmax(0, 1fr) 80px 90px minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1.2fr) 80px 100px minmax(0, 1fr) 60px 100px 170px;
             align-items: center;
             padding: 0 1.25rem;
             height: 60px;
@@ -587,12 +587,12 @@
         /* ── Responsive ── */
         @media (max-width: 900px) {
             .metric-strip { grid-template-columns: repeat(2, 1fr); }
-            .app-row { grid-template-columns: 1.5fr 80px 1fr 120px; height: auto; padding: 12px 16px; }
+            .app-row { grid-template-columns: minmax(0,1.2fr) 80px 100px 100px 170px; height: auto; padding: 12px 16px; }
             .app-row-head .hide-mobile, .app-row .hide-mobile { display: none; }
         }
         @media (max-width: 600px) {
             .metric-strip { grid-template-columns: 1fr 1fr; }
-            .app-row { grid-template-columns: 1fr 80px; }
+            .app-row { grid-template-columns: 1fr 80px 100px; }
             .topnav { padding: 0 1rem; }
             .container, .footer { padding-left: 1rem; padding-right: 1rem; }
         }
@@ -693,6 +693,7 @@
                     <div class="app-row app-row-head">
                         <div>Application</div>
                         <div>Status</div>
+                        <div>Controls</div>
                         <div class="hide-mobile">Image</div>
                         <div class="hide-mobile">Size</div>
                         <div>Uptime</div>
@@ -713,25 +714,24 @@
                         <span class="app-path">${app.url_path}</span>
                     </div>
                     <div><span class="status-pill ${sc}"><span class="dot"></span>${st}</span></div>
+                    <div class="ctrl-group">
+                        <button class="ctrl-btn ctrl-stop" onclick="ctrlContainer('${app.container}','stop',this)" ${app.status !== 'running' ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                            <span class="ctrl-tooltip">Stop</span>
+                        </button>
+                        <button class="ctrl-btn ctrl-start" onclick="ctrlContainer('${app.container}','start',this)" ${app.status === 'running' ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="8,5 19,12 8,19"/></svg>
+                            <span class="ctrl-tooltip">Start</span>
+                        </button>
+                        <button class="ctrl-btn ctrl-restart" onclick="ctrlContainer('${app.container}','restart',this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-2.636-6.364"/><polyline points="21 3 21 9 15 9"/></svg>
+                            <span class="ctrl-tooltip">Restart</span>
+                        </button>
+                    </div>
                     <div class="app-image hide-mobile" title="${app.image}">${imgShort}</div>
                     <div class="app-size hide-mobile">${sizeText}</div>
                     <div class="app-uptime">${app.uptime || '-'}</div>
                     <div class="app-actions-cell">
-                        <div class="ctrl-group">
-                            <button class="ctrl-btn ctrl-stop" onclick="ctrlContainer('${app.container}','stop',this)" ${app.status !== 'running' ? 'disabled' : ''}>
-                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
-                                <span class="ctrl-tooltip">Stop</span>
-                            </button>
-                            <button class="ctrl-btn ctrl-start" onclick="ctrlContainer('${app.container}','start',this)" ${app.status === 'running' ? 'disabled' : ''}>
-                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="8,5 19,12 8,19"/></svg>
-                                <span class="ctrl-tooltip">Start</span>
-                            </button>
-                            <button class="ctrl-btn ctrl-restart" onclick="ctrlContainer('${app.container}','restart',this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-2.636-6.364"/><polyline points="21 3 21 9 15 9"/></svg>
-                                <span class="ctrl-tooltip">Restart</span>
-                            </button>
-                        </div>
-                        <span class="action-divider"></span>
                         <button class="link-btn" onclick="openPanel('${app.container}')">Detail</button>
                         <a href="${app.url}" target="_blank" class="link-btn primary">Open</a>
                         <a href="${data.harbor_url}/harbor/projects/1/repositories/${app.harbor_name || app.name}" target="_blank" class="link-btn">Harbor</a>
